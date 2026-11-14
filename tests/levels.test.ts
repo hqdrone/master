@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import '../src/core/electricParts';
+import '../src/core/mechanicParts';
 import { LEVELS } from '../src/levels';
 import { boardForLevel, placeItem } from '../src/levels/build';
 import { isPath } from '../src/levels/types';
@@ -7,9 +8,10 @@ import { checkGoal, makeCtx } from '../src/sim/goals';
 import { getPart } from '../src/core/parts';
 
 describe('уровни', () => {
-  it('их 14 и id уникальны', () => {
-    expect(LEVELS.length).toBe(14);
-    expect(new Set(LEVELS.map((l) => l.id)).size).toBe(14);
+  it('14 уровней электрики, 10 механики, id уникальны', () => {
+    expect(LEVELS.filter((l) => l.world === 'electric').length).toBe(14);
+    expect(LEVELS.filter((l) => l.world === 'mechanic').length).toBe(10);
+    expect(new Set(LEVELS.map((l) => l.id)).size).toBe(LEVELS.length);
   });
 
   for (const level of LEVELS) {
@@ -43,6 +45,7 @@ describe('уровни', () => {
         if (level.mode === 'instruction') for (const p of b.parts) { p.on = true; p.pressed = true; }
         const ctx = makeCtx(b);
         expect(ctx.res.hasShort).toBe(false);
+        expect(ctx.mech.hasJam).toBe(false);
         expect(checkGoal(level.goal!, ctx)).toBe(true);
         // хватает деталей в палитре
         for (const [t, n] of Object.entries(level.palette)) {
@@ -69,5 +72,23 @@ describe('уровни', () => {
     for (const s of or.solution!) placeItem(b, s, false);
     expect(checkGoal(and.goal!, makeCtx(b))).toBe(false);
     expect(checkGoal(or.goal!, makeCtx(b))).toBe(true);
+  });
+});
+
+describe('механические задачки: неверные решения', () => {
+  const lv = (id: string) => LEVELS.find((l) => l.id === id)!;
+  const tryIt = (id: string, items: Parameters<typeof placeItem>[1][]) => {
+    const b = boardForLevel(lv(id));
+    for (const s of items) placeItem(b, s, false);
+    return checkGoal(lv(id).goal!, makeCtx(b));
+  };
+  it('«По часовой»: одни шестерни дают против часовой', () => {
+    expect(tryIt('mh-07', [2, 3, 4, 5].map((x) => ({ type: 'gear_s', x, y: 3 })))).toBe(false);
+  });
+  it('«Быстрая вертушка»: цепочка маленьких шестерён не ускоряет', () => {
+    expect(tryIt('mh-08', [2, 3, 4, 5].map((x) => ({ type: 'gear_s', x, y: 3 })))).toBe(false);
+  });
+  it('«Две ручки»: шестерни между ручками заклинивают', () => {
+    expect(tryIt('mh-10', [{ type: 'gear_s', x: 1, y: 3 }, { type: 'gear_s', x: 1, y: 4 }, { type: 'gear_s', x: 2, y: 3 }])).toBe(false);
   });
 });

@@ -1,12 +1,14 @@
 import type { Board, Part } from '../core/board';
 import { getPart } from '../core/parts';
 import { isOn, solveElectric, type ElectricResult, type Overrides } from './electric';
+import { solveMech, spins, type MechResult } from './mechanic';
 
 export type Goal = Record<string, unknown>;
 
 export interface GoalCtx {
   board: Board;
   res: ElectricResult;
+  mech: MechResult;
   solve: (ov: Overrides) => ElectricResult;
 }
 
@@ -28,8 +30,9 @@ export function checkGoal(goal: Goal, ctx: GoalCtx): boolean {
   return true;
 }
 
-export function makeCtx(board: Board, res?: ElectricResult): GoalCtx {
-  return { board, res: res ?? solveElectric(board), solve: (ov) => solveElectric(board, ov) };
+export function makeCtx(board: Board, res?: ElectricResult, mech?: MechResult): GoalCtx {
+  const r = res ?? solveElectric(board);
+  return { board, res: r, mech: mech ?? solveMech(board, r), solve: (ov) => solveElectric(board, ov) };
 }
 
 const ofType = (b: Board, t: string) => b.parts.filter((p) => p.type === t);
@@ -94,4 +97,38 @@ registerGoal('reachable', (arg: { inputs: string; state: Record<string, boolean>
     const r = ctx.solve(ov);
     return Object.entries(arg.state).every(([t, want]) => anyOn(ctx.board, r, t) === want);
   });
+});
+
+// ---- Механика ----
+
+/** {fanSpins: true | 'cw' | 'ccw' | false} и т.п.: cw — по часовой (как ручка). */
+function spinCheck(t: string) {
+  return (arg: unknown, { board, mech }: GoalCtx) => {
+    const list = ofType(board, t);
+    if (arg === false) return !list.some((p) => spins(p, mech));
+    return list.some((p) => {
+      if (!spins(p, mech)) return false;
+      const v = mech.speed.get(p.id)!;
+      if (arg === 'cw' || arg === 'right') return v > 0;
+      if (arg === 'ccw' || arg === 'left') return v < 0;
+      return true;
+    });
+  };
+}
+registerGoal('fanSpins', spinCheck('fan'));
+registerGoal('wheelSpins', spinCheck('wheel'));
+registerGoal('pusherMoves', spinCheck('pusher'));
+registerGoal('conveyorMoves', spinCheck('conveyor'));
+registerGoal('gearSpins', spinCheck('gear_s'));
+registerGoal('noJam', (arg, { mech }) => (arg === false ? mech.hasJam : !mech.hasJam));
+/** {speedAtLeast: {type: 'fan', min: 1.9}} — хоть одна такая деталь крутится не медленнее min. */
+registerGoal('speedAtLeast', (arg: { type: string; min: number }, { board, mech }) =>
+  ofType(board, arg.type).some((p) => Math.abs(mech.speed.get(p.id) ?? 0) >= arg.min),
+);
+/** {sameSystem: ['crank', 'fan']} — все детали этих типов в одной механической системе. */
+registerGoal('sameSystem', (arg: string[], { board, mech }) => {
+  const list = board.parts.filter((p) => arg.includes(p.type));
+  if (!arg.every((t) => list.some((p) => p.type === t))) return false;
+  const c = new Set(list.map((p) => mech.comp.get(p.id)));
+  return c.size === 1;
 });

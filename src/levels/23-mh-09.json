@@ -1,0 +1,144 @@
+{
+  "id": "mh-09",
+  "world": "mechanic",
+  "mode": "puzzle",
+  "title": "Конвейер вправо",
+  "grid": {
+    "w": 11,
+    "h": 7
+  },
+  "palette": {
+    "gear_s": 4,
+    "axle": 2
+  },
+  "prePlaced": [
+    {
+      "type": "battery",
+      "x": 2,
+      "y": 5,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          5,
+          3
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          5,
+          4
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "motor",
+      "x": 4,
+      "y": 3,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "conveyor",
+      "path": [
+        [
+          6,
+          1
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          8,
+          1
+        ],
+        [
+          9,
+          1
+        ]
+      ],
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "gear_s",
+      "x": 4,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "type": "gear_s",
+      "x": 4,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "type": "gear_s",
+      "x": 5,
+      "y": 1,
+      "rot": 0
+    }
+  ],
+  "goal": {
+    "conveyorMoves": "right"
+  },
+  "stars": {
+    "maxParts": 3
+  },
+  "intro": "Подключи мотор к конвейеру. Ящики — вправо!",
+  "outro": "Мотор крутит шестерни, шестерни — конвейер."
+}

@@ -1,6 +1,6 @@
 import type { Dir } from './geom';
 
-export type PortKind = 'electric' | 'water' | 'air' | 'mechanical';
+export type PortKind = 'electric' | 'water' | 'air' | 'mechanical' | 'belt';
 export type World = 'electric' | 'mechanic' | 'water' | 'air' | 'factory';
 
 /** Электрическая модель детали (для MNA). */
@@ -17,11 +17,30 @@ export interface ElectricSpec {
   nominal?: number;
 }
 
+/** Механическая модель детали. */
+export interface MechSpec {
+  /** gear — всё, что вращается и цепляется зубьями; axle — ось; belt — ремень/конвейер */
+  role: 'gear' | 'axle' | 'belt';
+  /** число зубьев (для gear) */
+  teeth?: number;
+  /** стороны (при rot = 0), где деталь цепляется; по умолчанию все */
+  sides?: Dir[];
+  /** источник вращения */
+  source?: 'crank' | 'motor';
+  /** деталь «показывает» вращение (вертушка, колесо…) */
+  output?: boolean;
+}
+
 export interface PartDef {
   type: string;
   world: World;
   /** Провод/труба/шланг: соединяется со всеми соседями этого типа (автотайлинг). */
   autotile?: PortKind;
+  /** ограничить стороны автотайлинга (при rot = 0), например конвейер — только E/W */
+  sides?: Dir[];
+  mech?: MechSpec;
+  /** поворот ни на что не влияет (шестерни) */
+  anyRot?: boolean;
   /** Два вывода детали при rot = 0 (для электрики: [минус/анод, плюс/катод]). */
   terminals?: [Dir, Dir];
   portKind?: PortKind;

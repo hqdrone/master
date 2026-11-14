@@ -1,0 +1,129 @@
+{
+  "id": "mh-05",
+  "world": "mechanic",
+  "mode": "instruction",
+  "title": "Мотор и конвейер",
+  "grid": {
+    "w": 10,
+    "h": 7
+  },
+  "palette": {
+    "motor": 1,
+    "gear_s": 1,
+    "conveyor": 4
+  },
+  "prePlaced": [
+    {
+      "type": "battery",
+      "x": 2,
+      "y": 5,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          5,
+          3
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "switch",
+      "x": 5,
+      "y": 4,
+      "rot": 1,
+      "locked": true
+    }
+  ],
+  "steps": [
+    {
+      "type": "motor",
+      "x": 4,
+      "y": 3,
+      "rot": 0,
+      "hint": "Мотор — в разрыв провода"
+    },
+    {
+      "type": "gear_s",
+      "x": 4,
+      "y": 2,
+      "rot": 0,
+      "hint": "Шестерню на мотор сверху"
+    },
+    {
+      "type": "conveyor",
+      "path": [
+        [
+          5,
+          2
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          8,
+          2
+        ]
+      ],
+      "hint": "Протяни конвейер от шестерни"
+    }
+  ],
+  "goal": {
+    "conveyorMoves": "right"
+  },
+  "afterPower": "Включи выключатель!",
+  "intro": "Мотор работает от тока и крутит шестерни!",
+  "outro": "Ток → мотор → шестерня → конвейер. Вот фабрика!"
+}

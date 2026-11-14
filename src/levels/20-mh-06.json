@@ -1,0 +1,45 @@
+{
+  "id": "mh-06",
+  "world": "mechanic",
+  "mode": "instruction",
+  "title": "Толкатель",
+  "grid": {
+    "w": 9,
+    "h": 6
+  },
+  "palette": {
+    "gear_s": 1,
+    "pusher": 1
+  },
+  "prePlaced": [
+    {
+      "type": "crank",
+      "x": 2,
+      "y": 3,
+      "rot": 0,
+      "locked": true
+    }
+  ],
+  "steps": [
+    {
+      "type": "gear_s",
+      "x": 3,
+      "y": 3,
+      "rot": 0,
+      "hint": "Шестерню рядом с ручкой"
+    },
+    {
+      "type": "pusher",
+      "x": 4,
+      "y": 3,
+      "rot": 0,
+      "hint": "Толкатель — колесом к шестерне"
+    }
+  ],
+  "goal": {
+    "pusherMoves": true
+  },
+  "afterPower": "Нажми на ручку — она закрутится!",
+  "intro": "Можно ли из вращения сделать толчок?",
+  "outro": "Кривошип превращает вращение в толчки."
+}

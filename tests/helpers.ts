@@ -1,4 +1,5 @@
 import '../src/core/electricParts';
+import '../src/core/mechanicParts';
 import { Board } from '../src/core/board';
 
 /** Простая схема из ASCII: B батарейка, L лампа, M мотор, Z пищалка, S выкл.(вкл), s выкл.(выкл),
@@ -25,6 +26,7 @@ export function parse(rows: string[]): Board {
         s: () => b.add({ type: 'switch', x, y, rot, on: false }),
         K: () => b.add({ type: 'button', x, y, rot }),
         D: () => b.add({ type: 'led', x, y, rot }),
+        g: () => b.add({ type: 'gear_s', x, y, rot: 0 }),
         d: () => b.add({ type: 'led', x, y, rot: rot + 2 }),
       };
       map[ch]?.();

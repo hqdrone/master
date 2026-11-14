@@ -4,6 +4,7 @@ import { boardForLevel } from '../levels/build';
 import { isPath, type ItemSpec, type LevelDef } from '../levels/types';
 import { isOn, solveElectric, type ElectricResult } from '../sim/electric';
 import { checkGoal } from '../sim/goals';
+import { solveMech, SPIN_MIN, type MechResult } from '../sim/mechanic';
 import { Renderer, TILE, type Ghost } from '../render/renderer';
 import { initAudio } from '../audio/synth';
 import { Ambience, sfx } from '../audio/sounds';
@@ -42,6 +43,10 @@ export class Game {
   private items = new Map<string, { el: HTMLElement; count: HTMLElement }>();
 
   private sim: ElectricResult | null = null;
+  private mech: MechResult | null = null;
+  private hadJam = false;
+  private tickPhase = 0;
+  private told = new Set<string>();
   private simVersion = -1;
   private goalVersion = -1;
   private goalOk = false;
@@ -196,9 +201,11 @@ export class Game {
     this.powerBtn.classList.add('hidden');
     this.stepIndex = -2;
     this.sim = null;
+    this.mech = null;
     this.simVersion = -1;
     this.goalVersion = -1;
     this.prevOn.clear();
+    this.told.clear();
     this.robot.say(this.level.intro ?? T.robot.sandbox);
     this.hintLockUntil = this.t + 3;
   }
@@ -229,7 +236,8 @@ export class Game {
 
   private rotatePart(p: Part): void {
     if (p.locked) { this.say(T.robot.locked, 1.5); sfx.error(); return; }
-    if (getPart(p.type).autotile) return;
+    const def = getPart(p.type);
+    if (def.autotile || def.anyRot) return;
     this.pushUndo();
     this.board.rotate(p.id);
     sfx.rotate();
@@ -363,6 +371,7 @@ export class Game {
       } else if (getPart(p.type).interactive === 'toggle') {
         p.on = !p.on;
         this.board.touch();
+        this.hintLockUntil = 0; // ребёнок что-то сделал — пусть робот реагирует
         sfx.click();
       }
     };
@@ -420,6 +429,7 @@ export class Game {
     const p = this.board.at(s.x, s.y);
     if (!p || p.type !== s.type) return false;
     const want = s.rot ?? 0;
+    if (getPart(s.type).anyRot) return true;
     return getPart(s.type).symmetric ? p.rot % 2 === want % 2 : p.rot === want;
   }
 
@@ -486,7 +496,7 @@ export class Game {
       if (this.board.at(x, y)) preview = null;
     }
     this.renderer.draw({
-      board: this.board, sim: this.sim, t: this.t, dt, angles: this.angles,
+      board: this.board, sim: this.sim, mech: this.mech, t: this.t, dt, angles: this.angles,
       ghosts, preview, selected: this.selected,
     });
     this.raf = requestAnimationFrame(this.frame);
@@ -501,21 +511,32 @@ export class Game {
     const b = this.board;
     if (this.powered && b.version !== this.simVersion) {
       this.sim = solveElectric(b);
+      this.mech = solveMech(b, this.sim);
       this.simVersion = b.version;
     }
-    if (!this.powered) this.sim = null;
+    if (!this.powered) { this.sim = null; this.mech = null; }
     const sim = this.sim;
+    const mech = this.mech;
 
-    let motorMax = 0, buzzMax = 0, lamps = 0;
+    let motorMax = 0, buzzMax = 0, lamps = 0, gearMax = 0;
     const events: string[] = [];
-    if (sim) {
+    if (sim && mech) {
       for (const p of b.parts) {
         const def = getPart(p.type);
         const lv = sim.level.get(p.id) ?? 0;
-        if (def.output === 'spin') {
-          this.angles.set(p.id, (this.angles.get(p.id) ?? 0) + lv * dt * 14);
-          motorMax = Math.max(motorMax, Math.abs(lv));
+        if (def.mech) {
+          const v = mech.speed.get(p.id) ?? 0;
+          // ленты — скорость в пикселях, шестерни — угол
+          const k = def.mech.role === 'belt' ? 3.5 : 4;
+          this.angles.set(p.id, (this.angles.get(p.id) ?? 0) + v * dt * k);
+          if (def.mech.role === 'gear') gearMax = Math.max(gearMax, Math.abs(v) * (8 / (def.mech.teeth ?? 8)));
+          if (def.mech.output) {
+            const on = Math.abs(v) > SPIN_MIN;
+            if (on && !this.prevOn.get(p.id)) events.push(p.type);
+            this.prevOn.set(p.id, on);
+          }
         }
+        if (def.output === 'spin') motorMax = Math.max(motorMax, Math.abs(lv));
         if (def.output === 'sound') buzzMax = Math.max(buzzMax, lv);
         if (def.output === 'light') lamps += lv;
         if (def.output) {
@@ -528,18 +549,25 @@ export class Game {
           this.prevOn.set(p.id, on);
         }
         if (sim.shorted.has(p.id) && Math.random() < 0.5) this.renderer.particles.smoke(p.x * TILE + 8, p.y * TILE + 4);
+        if (mech.jammed.has(p.id) && Math.random() < 0.05) this.renderer.particles.spark(p.x * TILE + 8, p.y * TILE + 8, 9);
       }
       if (sim.hasShort && !this.hadShort) { sfx.short(); this.say(T.robot.short, 3); }
       this.hadShort = sim.hasShort;
+      if (mech.hasJam && !this.hadJam) { sfx.jam(); this.say(T.robot.jam, 3); }
+      this.hadJam = mech.hasJam;
     }
     this.amb.update(motorMax, buzzMax, lamps);
+    // «тик-тик» шестерён
+    const before = Math.floor(this.tickPhase);
+    this.tickPhase += Math.min(gearMax, 3) * dt * 5;
+    if (Math.floor(this.tickPhase) !== before) sfx.tick();
 
-    if (sim) this.hints(sim, events);
+    if (sim && mech) this.hints(sim, mech, events);
 
     // проверка цели
-    if (sim && !this.won && this.level.goal) {
+    if (sim && mech && !this.won && this.level.goal) {
       if (this.goalVersion !== b.version) {
-        this.goalOk = checkGoal(this.level.goal, { board: b, res: sim, solve: (ov) => solveElectric(b, ov) });
+        this.goalOk = checkGoal(this.level.goal, { board: b, res: sim, mech, solve: (ov) => solveElectric(b, ov) });
         this.goalVersion = b.version;
       }
       this.winHold = this.goalOk ? this.winHold + dt : 0;
@@ -547,11 +575,26 @@ export class Game {
     }
   }
 
-  private hints(sim: ElectricResult, events: string[]): void {
+  private hints(sim: ElectricResult, mech: MechResult, events: string[]): void {
     const b = this.board;
     const loads = b.parts.filter((p) => getPart(p.type).output).length;
     const bats = b.count('battery');
     if (sim.hasShort) { this.robot.say(T.robot.short); this.hintLockUntil = this.t + 2; return; }
+    if (mech.hasJam) { this.robot.say(T.robot.jam); this.hintLockUntil = this.t + 2; return; }
+    if (this.t >= this.hintLockUntil) {
+      // механика: каждую мысль — один раз за уровень
+      const fast = b.parts.some((p) => getPart(p.type).mech?.output && Math.abs(mech.speed.get(p.id) ?? 0) >= 1.9);
+      const turning = b.parts.filter((p) => getPart(p.type).mech?.role === 'gear' && Math.abs(mech.speed.get(p.id) ?? 0) > SPIN_MIN);
+      const once = (key: string, text: string, cond: boolean) => {
+        if (!cond || this.told.has(key)) return false;
+        this.told.add(key); this.say(text, 3.5); return true;
+      };
+      if (once('fast', T.robot.faster, fast)) return;
+      if (once('opposite', T.robot.opposite, turning.length >= 3)) return;
+      if (once('belt', T.robot.beltSame, b.count('belt') > 0 && turning.length >= 2)) return;
+      if (events.includes('conveyor') && once('conv', T.robot.conveyor, true)) return;
+      if (events.includes('pusher') && once('push', T.robot.pusher, true)) return;
+    }
     if (sim.ledReversed.size) { this.say(T.robot.ledBack, 2); return; }
     if (this.t < this.hintLockUntil) return;
     if (events.includes('lamp')) {
@@ -561,6 +604,7 @@ export class Game {
       return;
     }
     if (events.includes('motor')) { this.say(T.robot.motor, 3); return; }
+    if (events.includes('fan') || events.includes('wheel')) { this.say(T.robot.spinning, 3); return; }
     if (events.includes('buzzer')) { this.say(T.robot.buzzer, 3); return; }
     if (events.includes('led')) { this.say(T.robot.lampOn, 3); return; }
     if (loads > 0 && bats === 0 && this.level.mode === 'sandbox') { this.say(T.robot.noBattery, 3); return; }

@@ -1,8 +1,9 @@
 import type { Board, Part } from '../core/board';
-import { connectionMask, offers } from '../core/connect';
+import { connectionMask, offersKinds } from '../core/connect';
 import { DIRS, DX, DY, opp } from '../core/geom';
 import { getPart } from '../core/parts';
 import type { ElectricResult } from '../sim/electric';
+import type { MechResult } from '../sim/mechanic';
 import { BOARD_BG, BOARD_DOT, C, PAL } from './colors';
 import { Particles } from './particles';
 import { line, rect, type Ctx } from './px';
@@ -15,6 +16,7 @@ export interface Ghost { type: string; x: number; y: number; rot: number }
 export interface Scene {
   board: Board;
   sim: ElectricResult | null;
+  mech: MechResult | null;
   t: number;
   dt: number;
   angles: Map<number, number>;
@@ -74,11 +76,12 @@ export class Renderer {
     for (const g of s.ghosts) {
       c.globalAlpha = pulse;
       let m = 0;
-      if (getPart(g.type).autotile) {
+      const kind = getPart(g.type).autotile;
+      if (kind) {
         for (const d of DIRS) {
           const nx = g.x + DX[d], ny = g.y + DY[d];
           const q = board.at(nx, ny);
-          if (ghostCells.has(`${nx},${ny}`) || (q && offers(q, opp(d)))) m |= 1 << d;
+          if (ghostCells.has(`${nx},${ny}`) || (q && offersKinds(q, opp(d)).includes(kind))) m |= 1 << d;
         }
       }
       drawPart(c, g.type, g.x * TILE, g.y * TILE, g.rot, { t: s.t, mask: m });
@@ -155,6 +158,8 @@ export class Renderer {
       angle: s.angles.get(p.id) ?? 0,
       mask: def.autotile ? connectionMask(s.board, p.x, p.y) : 0,
       short: sim?.shorted.has(p.id),
+      jam: s.mech?.jammed.has(p.id),
+      gx: p.x * TILE,
     });
     if (p.locked && !def.autotile) {
       rect(c, p.x * TILE + 1, p.y * TILE + 1, 2, 2, C.dgray);

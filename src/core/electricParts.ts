@@ -1,5 +1,5 @@
 import { registerPart } from './parts';
-import { E, W } from './geom';
+import { E, N, S, W } from './geom';
 
 // Мир «Электрика». Новые детали добавляются здесь, ядро не трогаем.
 // Напряжение батарейки 3 В, внутреннее сопротивление 0.5 Ом.
@@ -15,6 +15,8 @@ registerPart({
 registerPart({
   type: 'motor', world: 'electric', terminals: [W, E], portKind: 'electric', symmetric: true,
   electric: { kind: 'load', r: 8, nominal: 3 / 8.5 }, output: 'spin', onThreshold: 0.15,
+  // сверху и снизу у мотора — шестерёнка: он крутит соседей (электрика → механика)
+  mech: { role: 'gear', teeth: 8, sides: [N, S], source: 'motor' },
 });
 registerPart({
   type: 'buzzer', world: 'electric', terminals: [W, E], portKind: 'electric', symmetric: true,

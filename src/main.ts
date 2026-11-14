@@ -2,12 +2,13 @@ import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/700.css';
 import './ui/style.css';
 import './core/electricParts';
+import './core/mechanicParts';
 import { setMuted } from './audio/synth';
 import { levelsOf } from './levels';
 import type { LevelDef } from './levels/types';
 import { save } from './save/progress';
 import { Game } from './ui/game';
-import { mapScreen, menuScreen, safetyDialog, workshopLevel, type Nav } from './ui/screens';
+import { mapScreen, menuScreen, safetyDialog, setWorld, workshopLevel, type Nav } from './ui/screens';
 
 const app = document.getElementById('app')!;
 setMuted(save.get().muted);
@@ -32,6 +33,7 @@ const nav: Nav = {
     const list = levelsOf(l.world);
     const i = list.findIndex((x) => x.id === l.id);
     const next = list[i + 1];
+    setWorld(l.world);
     show(new Game({
       level: l,
       onExit: () => nav.map(),

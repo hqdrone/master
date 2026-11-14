@@ -16,6 +16,8 @@ export const sfx = {
     notes.forEach((f, i) => tone(f, i === notes.length - 1 ? 0.4 : 0.14, { type: 'square', vol: 0.1, delay: i * 0.12 }));
   },
   rotate: () => tone(600, 0.04, { vol: 0.08, slideTo: 800 }),
+  tick: () => tone(2600, 0.012, { vol: 0.035 }),
+  jam: () => { hiss(0.6, { vol: 0.12, type: 'bandpass', freq: 400 }); tone(90, 0.4, { type: 'square', vol: 0.08, slideTo: 60 }); },
 };
 
 /** Непрерывные звуки поля. */

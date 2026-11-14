@@ -1,0 +1,66 @@
+{
+  "id": "mh-07",
+  "world": "mechanic",
+  "mode": "puzzle",
+  "title": "По часовой",
+  "grid": {
+    "w": 9,
+    "h": 6
+  },
+  "palette": {
+    "gear_s": 4,
+    "axle": 2
+  },
+  "prePlaced": [
+    {
+      "type": "crank",
+      "x": 1,
+      "y": 3,
+      "rot": 0,
+      "locked": true,
+      "on": true
+    },
+    {
+      "type": "fan",
+      "x": 6,
+      "y": 3,
+      "rot": 0,
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "axle",
+      "path": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ]
+    },
+    {
+      "type": "gear_s",
+      "x": 4,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "type": "gear_s",
+      "x": 5,
+      "y": 3,
+      "rot": 0
+    }
+  ],
+  "goal": {
+    "fanSpins": "cw"
+  },
+  "stars": {
+    "maxParts": 4
+  },
+  "intro": "Вертушка должна крутиться как ручка — по часовой!",
+  "outro": "Ось не меняет направление, а шестерня — меняет."
+}

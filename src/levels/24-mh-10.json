@@ -1,0 +1,81 @@
+{
+  "id": "mh-10",
+  "world": "mechanic",
+  "mode": "puzzle",
+  "title": "Две ручки",
+  "grid": {
+    "w": 8,
+    "h": 7
+  },
+  "palette": {
+    "gear_s": 3,
+    "axle": 3
+  },
+  "prePlaced": [
+    {
+      "type": "crank",
+      "x": 1,
+      "y": 2,
+      "rot": 0,
+      "locked": true,
+      "on": true
+    },
+    {
+      "type": "crank",
+      "x": 1,
+      "y": 5,
+      "rot": 0,
+      "locked": true,
+      "on": true
+    },
+    {
+      "type": "fan",
+      "x": 3,
+      "y": 3,
+      "rot": 0,
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "axle",
+      "path": [
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ]
+    },
+    {
+      "type": "gear_s",
+      "x": 2,
+      "y": 3,
+      "rot": 0
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "sameSystem": [
+          "crank",
+          "fan"
+        ]
+      },
+      {
+        "fanSpins": true
+      },
+      {
+        "noJam": true
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 3
+  },
+  "intro": "Обе ручки должны крутить вертушку — и не заклинить!",
+  "outro": "Если шестерни тянут в разные стороны — заклинит."
+}

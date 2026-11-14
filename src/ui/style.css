@@ -62,9 +62,11 @@ body { user-select: none; -webkit-user-select: none; }
 /* карта */
 .map { overflow-y: auto; }
 .worlds { display: flex; gap: 14px; padding: 16px; justify-content: center; flex-wrap: wrap; }
-.world { width: 150px; padding: 12px; background: var(--panel); border: 3px solid #000; text-align: center; }
+.world { font-family: var(--font); color: var(--text); cursor: pointer; width: 150px; padding: 12px; background: var(--panel); border: 3px solid #000; text-align: center; }
 .world.open { border-color: var(--yellow); box-shadow: 0 0 0 3px #000, 0 0 16px rgba(255, 236, 39, 0.4); }
-.world.closed { opacity: 0.55; }
+.world.closed { opacity: 0.55; cursor: default; }
+.world.current { background: #304684; }
+.map .helper { margin-top: auto; }
 .world-icon { width: 64px; height: 64px; }
 .wname { font-size: 20px; margin-top: 6px; }
 .soon { font-size: 14px; color: var(--muted); display: flex; gap: 6px; justify-content: center; align-items: center; margin-top: 4px; }
