@@ -61,9 +61,22 @@ export function menuScreen(nav: Nav): { el: HTMLElement; destroy(): void } {
   const el = h('div', { cls: 'screen menu' },
     h('h1', { cls: 'title', text: T.gameTitle }),
     robot.el,
-    h('div', { cls: 'col' }, button(T.play, () => nav.map(), 'btn big primary'), ws, soundButton()),
+    h('div', { cls: 'col' }, button(T.play, () => nav.map(), 'btn big primary'), ws,
+      h('div', { cls: 'row' }, soundButton(), fullscreenButton())),
   );
   return { el, destroy: () => robot.destroy() };
+}
+
+/** На телефоне адресная строка съедает место — даём развернуть игру. */
+function fullscreenButton(): HTMLElement | null {
+  const d = document as Document & { webkitFullscreenEnabled?: boolean };
+  if (!(d.fullscreenEnabled || d.webkitFullscreenEnabled) || !matchMedia('(pointer: coarse)').matches) return null;
+  return button(T.fullscreen, () => {
+    const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else if (el.requestFullscreen) void el.requestFullscreen().catch(() => {});
+    else el.webkitRequestFullscreen?.();
+  }, 'btn small');
 }
 
 export function safetyDialog(then: () => void): void {

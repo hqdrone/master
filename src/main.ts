@@ -45,3 +45,10 @@ const nav: Nav = {
 };
 
 nav.menu();
+
+// Офлайн-режим и «иконка на рабочий стол» (только в собранной версии).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => { /* без офлайна — не страшно */ });
+  });
+}

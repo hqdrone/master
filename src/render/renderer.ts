@@ -45,16 +45,21 @@ export class Renderer {
     this.vc = view.getContext('2d')!;
   }
 
-  /** Подобрать целый масштаб под доступное место. */
+  /** Подобрать масштаб: целое число ФИЗИЧЕСКИХ пикселей на пиксель арта —
+   *  чётко и на телефонах с плотным экраном, и на обычных мониторах. */
   fit(w: number, h: number, availW: number, availH: number): void {
     const lw = w * TILE, lh = h * TILE;
     this.low.width = lw; this.low.height = lh;
-    this.scale = Math.max(1, Math.floor(Math.min(availW / lw, availH / lh)));
     const dpr = window.devicePixelRatio || 1;
-    const k = Math.max(1, Math.round(this.scale * dpr));
-    this.view.width = lw * k; this.view.height = lh * k;
-    this.view.style.width = `${lw * this.scale}px`;
-    this.view.style.height = `${lh * this.scale}px`;
+    const fitK = Math.min((availW * dpr) / lw, (availH * dpr) / lh);
+    let k = Math.max(1, Math.floor(fitK));
+    // на маленьком экране целый масштаб может «съесть» до трети места — тогда
+    // берём дробный (пиксели чуть неровные, зато поле крупнее)
+    if (fitK / k > 1.12) k = Math.floor(fitK * 4) / 4;
+    this.scale = k / dpr;
+    this.view.width = Math.round(lw * k); this.view.height = Math.round(lh * k);
+    this.view.style.width = `${this.view.width / dpr}px`;
+    this.view.style.height = `${this.view.height / dpr}px`;
   }
 
   cellAt(clientX: number, clientY: number, w: number, h: number): { x: number; y: number } | null {

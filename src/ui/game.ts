@@ -88,7 +88,7 @@ export class Game {
     this.canvas = h('canvas', { cls: 'field' });
     this.renderer = new Renderer(this.canvas);
     this.powerBtn = button(T.powerOn, () => this.powerOn(), 'btn power hidden');
-    this.wrap = h('div', { cls: 'field-wrap' }, this.canvas, this.powerBtn);
+    this.wrap = h('div', { cls: 'field-wrap' }, h('div', { cls: 'rotate-tip', text: T.rotatePhone }), this.canvas, this.powerBtn);
     this.paletteEl = h('aside', { cls: 'palette' });
     this.stepEl = h('span', { cls: 'step' });
 
@@ -224,7 +224,9 @@ export class Game {
       sfx.error();
       return false;
     }
-    this.board.add({ type, x, y, rot: getPart(type).autotile ? 0 : rot });
+    const placed = this.board.add({ type, x, y, rot: getPart(type).autotile ? 0 : rot });
+    // только что поставленную деталь сразу можно повернуть кнопкой «Повернуть»
+    if (placed && !getPart(type).autotile) this.selected = placed.id;
     if (quiet) sfx.wire(); else sfx.place();
     const r = this.renderer.particles;
     for (let i = 0; i < 4; i++) r.spark(x * TILE + 8, y * TILE + 8, 6);
@@ -352,13 +354,14 @@ export class Game {
 
     const up = (e: PointerEvent) => {
       const c = cell(e);
+      if (e.pointerType !== 'mouse') this.hover = null; // у пальца нет «наведения»
       if (this.paletteDrag) {
         const type = this.paletteDrag;
         this.paletteDrag = null;
         if (c && this.brush) {
           this.pushUndo();
           if (!this.place(type, c.x, c.y, this.brush.rot)) this.undo.pop();
-        } else if (!c && this.paletteWasSelected && this.items.get(type)?.el.contains(e.target as Node)) {
+        } else if (!c && this.paletteWasSelected && e.target instanceof Node && this.items.get(type)?.el.contains(e.target)) {
           this.brush = null; // повторный щелчок по выбранной детали — снять выбор
         }
       }
@@ -410,6 +413,16 @@ export class Game {
     };
 
     const resize = () => this.fit();
+    const ro = new ResizeObserver(() => this.fit());
+    ro.observe(this.wrap);
+    // палец ушёл в прокрутку / система отменила касание
+    const cancel = () => {
+      this.paletteDrag = null;
+      const d = this.drag;
+      this.drag = null;
+      if (d?.kind === 'part' && d.hold) { const p = this.board.get(d.id); if (p) this.setPressed(p, false); }
+    };
+    window.addEventListener('pointercancel', cancel);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('keydown', key);
@@ -421,12 +434,16 @@ export class Game {
       window.removeEventListener('pointerup', up);
       window.removeEventListener('keydown', key);
       window.removeEventListener('resize', resize);
+      window.removeEventListener('pointercancel', cancel);
+      ro.disconnect();
     });
   }
 
   private fit(): void {
     const r = this.wrap.getBoundingClientRect();
-    this.renderer.fit(this.board.w, this.board.h, r.width - 16, r.height - 16);
+    if (r.width < 10 || r.height < 10) return;
+    const pad = r.height < 300 || r.width < 420 ? 8 : 16;
+    this.renderer.fit(this.board.w, this.board.h, r.width - pad, r.height - pad);
   }
 
   // ---------- инструкция ----------
