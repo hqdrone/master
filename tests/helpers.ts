@@ -1,5 +1,6 @@
 import '../src/core/electricParts';
 import '../src/core/mechanicParts';
+import '../src/core/waterParts';
 import { Board } from '../src/core/board';
 
 /** Простая схема из ASCII: B батарейка, L лампа, M мотор, Z пищалка, S выкл.(вкл), s выкл.(выкл),

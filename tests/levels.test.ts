@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import '../src/core/electricParts';
 import '../src/core/mechanicParts';
+import '../src/core/waterParts';
 import { LEVELS } from '../src/levels';
 import { boardForLevel, placeItem } from '../src/levels/build';
 import { isPath } from '../src/levels/types';
 import { checkGoal, makeCtx } from '../src/sim/goals';
 import { getPart } from '../src/core/parts';
+import { runWater } from '../src/sim/fluid';
 
 describe('уровни', () => {
   it('14 уровней электрики, 10 механики, id уникальны', () => {
     expect(LEVELS.filter((l) => l.world === 'electric').length).toBe(14);
     expect(LEVELS.filter((l) => l.world === 'mechanic').length).toBe(10);
+    expect(LEVELS.filter((l) => l.world === 'water').length).toBe(10);
     expect(new Set(LEVELS.map((l) => l.id)).size).toBe(LEVELS.length);
   });
 
@@ -38,11 +41,12 @@ describe('уровни', () => {
         expect(items?.length).toBeGreaterThan(0);
         const before = b.parts.length;
         for (const s of items) placeItem(b, s, false);
-        // шаги не должны налезать друг на друга
-        const cells = items.reduce((n, s) => n + (isPath(s) ? s.path.length : 1), 0);
+        // шаги не должны налезать друг на друга (переключатели уже стоящих деталей не считаем)
+        const cells = items.reduce((n, s) => n + (isPath(s) ? s.path.length : boardForLevel(level).at(s.x, s.y) ? 0 : 1), 0);
         expect(b.parts.length - before).toBe(cells);
         // в инструкции после сборки нужно щёлкнуть выключатели / нажать кнопки
         if (level.mode === 'instruction') for (const p of b.parts) { p.on = true; p.pressed = true; }
+        if (level.world === 'water') runWater(b, 20); // баки наполняются/пустеют со временем
         const ctx = makeCtx(b);
         expect(ctx.res.hasShort).toBe(false);
         expect(ctx.mech.hasJam).toBe(false);
@@ -90,5 +94,26 @@ describe('механические задачки: неверные решени
   });
   it('«Две ручки»: шестерни между ручками заклинивают', () => {
     expect(tryIt('mh-10', [{ type: 'gear_s', x: 1, y: 3 }, { type: 'gear_s', x: 1, y: 4 }, { type: 'gear_s', x: 2, y: 3 }])).toBe(false);
+  });
+});
+
+describe('водяные задачки: неверные решения', () => {
+  const lv = (id: string) => LEVELS.find((l) => l.id === id)!;
+  it('«Наполни бак»: открыли оба крана — лужа', () => {
+    const b = boardForLevel(lv('wt-07'));
+    for (const p of b.parts) if (p.type === 'valve' || p.type === 'pump') p.on = true;
+    runWater(b, 20);
+    expect(checkGoal(lv('wt-07').goal!, makeCtx(b))).toBe(false);
+  });
+  it('«Без луж»: третий конец не закрыт — лужа', () => {
+    const b = boardForLevel(lv('wt-08'));
+    placeItem(b, { type: 'fountain', x: 4, y: 1, rot: 0 }, false);
+    placeItem(b, { type: 'drain', x: 4, y: 7, rot: 1 }, false);
+    expect(checkGoal(lv('wt-08').goal!, makeCtx(b))).toBe(false);
+  });
+  it('«Колесо и вертушка»: без слива колесо стоит', () => {
+    const b = boardForLevel(lv('wt-09'));
+    for (const s of lv('wt-09').solution!) if (!('type' in s && s.type === 'drain')) placeItem(b, s, false);
+    expect(checkGoal(lv('wt-09').goal!, makeCtx(b))).toBe(false);
   });
 });

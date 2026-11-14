@@ -3,6 +3,7 @@ import { connects } from '../core/connect';
 import { DX, DY, type Dir } from '../core/geom';
 import { getPart } from '../core/parts';
 import type { ElectricResult } from './electric';
+import { FLOW_NOM, type FluidResult } from './fluid';
 
 /** Скорость, ниже которой считаем, что не крутится. */
 export const SPIN_MIN = 0.05;
@@ -34,14 +35,15 @@ function ratio(a: Part, b: Part): number | null {
   }
 }
 
-function sourceSpeed(p: Part, el: ElectricResult | null): number {
+function sourceSpeed(p: Part, el: ElectricResult | null, water: FluidResult | null): number {
   const src = getPart(p.type).mech?.source;
+  if (src === 'water') return Math.max(-2, Math.min(2, (water?.flow.get(p.id) ?? 0) / FLOW_NOM));
   if (src === 'crank') return p.on ? 1 : 0;
   if (src === 'motor') return el?.level.get(p.id) ?? 0;
   return 0;
 }
 
-export function solveMech(board: Board, el: ElectricResult | null): MechResult {
+export function solveMech(board: Board, el: ElectricResult | null, water: FluidResult | null = null): MechResult {
   const res: MechResult = { speed: new Map(), jammed: new Set(), hasJam: false, comp: new Map() };
   const parts = board.parts.filter((p) => getPart(p.type).mech);
   const adj = new Map<number, { q: Part; r: number }[]>();
@@ -80,7 +82,7 @@ export function solveMech(board: Board, el: ElectricResult | null): MechResult {
     // источники задают масштаб; разные мнения = заклинило
     let k: number | null = null;
     for (const m of members) {
-      const s = sourceSpeed(m, el);
+      const s = sourceSpeed(m, el, water);
       if (Math.abs(s) < SPIN_MIN) continue;
       const km = s / rel.get(m.id)!;
       if (k === null) k = km;

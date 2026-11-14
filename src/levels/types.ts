@@ -9,6 +9,7 @@ export interface PlacedSpec {
   locked?: boolean;
   on?: boolean;
   pressed?: boolean;
+  level?: number;
   hint?: string;
 }
 

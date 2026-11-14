@@ -1,0 +1,81 @@
+{
+  "id": "wt-10",
+  "world": "water",
+  "mode": "puzzle",
+  "title": "Через бак",
+  "grid": {
+    "w": 9,
+    "h": 6
+  },
+  "palette": {
+    "pipe": 4,
+    "fountain": 1
+  },
+  "prePlaced": [
+    {
+      "type": "pump",
+      "x": 1,
+      "y": 3,
+      "rot": 0,
+      "locked": true,
+      "on": true
+    },
+    {
+      "type": "pipe",
+      "path": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "tank",
+      "x": 4,
+      "y": 3,
+      "rot": 0,
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "pipe",
+      "path": [
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ]
+      ]
+    },
+    {
+      "type": "fountain",
+      "x": 6,
+      "y": 2,
+      "rot": 0
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "fountainOn": true
+      },
+      {
+        "noSpill": true
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 3
+  },
+  "intro": "Насос наливает бак. Сделай фонтан из бака!",
+  "outro": "Бак наполняется и отдаёт воду дальше."
+}

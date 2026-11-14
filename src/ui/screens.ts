@@ -11,7 +11,7 @@ import { T } from './texts';
 const ALL = new URLSearchParams(location.search).has('all');
 const WORLDS = ['electric', 'mechanic', 'water', 'air', 'factory'];
 
-const PLAYABLE = ['electric', 'mechanic'];
+const PLAYABLE = ['electric', 'mechanic', 'water'];
 let currentWorld = 'electric';
 
 const worldDone = (w: string) => levelsOf(w).every((l) => save.stars(l.id) > 0);

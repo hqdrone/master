@@ -2,6 +2,7 @@ import type { Board, Part } from '../core/board';
 import { getPart } from '../core/parts';
 import { isOn, solveElectric, type ElectricResult, type Overrides } from './electric';
 import { solveMech, spins, type MechResult } from './mechanic';
+import { FLOW_MIN, solveFluid, type FluidResult } from './fluid';
 
 export type Goal = Record<string, unknown>;
 
@@ -9,6 +10,7 @@ export interface GoalCtx {
   board: Board;
   res: ElectricResult;
   mech: MechResult;
+  water: FluidResult;
   solve: (ov: Overrides) => ElectricResult;
 }
 
@@ -30,9 +32,10 @@ export function checkGoal(goal: Goal, ctx: GoalCtx): boolean {
   return true;
 }
 
-export function makeCtx(board: Board, res?: ElectricResult, mech?: MechResult): GoalCtx {
+export function makeCtx(board: Board, res?: ElectricResult, mech?: MechResult, water?: FluidResult): GoalCtx {
   const r = res ?? solveElectric(board);
-  return { board, res: r, mech: mech ?? solveMech(board, r), solve: (ov) => solveElectric(board, ov) };
+  const w = water ?? solveFluid(board);
+  return { board, res: r, water: w, mech: mech ?? solveMech(board, r, w), solve: (ov) => solveElectric(board, ov) };
 }
 
 const ofType = (b: Board, t: string) => b.parts.filter((p) => p.type === t);
@@ -132,3 +135,29 @@ registerGoal('sameSystem', (arg: string[], { board, mech }) => {
   const c = new Set(list.map((p) => mech.comp.get(p.id)));
   return c.size === 1;
 });
+
+// ---- Вода ----
+
+registerGoal('waterWheelSpins', spinCheck('waterwheel'));
+/** {fountainOn: true | 'all' | false} */
+registerGoal('fountainOn', (arg: unknown, { board, water }) => {
+  const list = ofType(board, 'fountain');
+  const on = list.filter((p) => (water.flow.get(p.id) ?? 0) > FLOW_MIN * 5);
+  if (arg === false) return on.length === 0;
+  if (arg === 'all') return list.length > 0 && on.length === list.length;
+  return on.length > 0;
+});
+/** {tankFull: true | 'all'} — бак (хоть один / все) почти полон. */
+registerGoal('tankFull', (arg: unknown, { board }) => {
+  const list = ofType(board, 'tank');
+  const full = list.filter((p) => (p.level ?? 0) >= 0.95);
+  if (arg === 'all') return list.length > 0 && full.length === list.length;
+  return full.length > 0;
+});
+registerGoal('tankEmpty', (_arg, { board }) => {
+  const list = ofType(board, 'tank');
+  return list.length > 0 && list.every((p) => (p.level ?? 0) <= 0.05);
+});
+registerGoal('noSpill', (arg, { water }) => (arg === false ? water.spilling : !water.spilling));
+/** Хоть немного воды течёт из насоса. */
+registerGoal('waterFlows', (_arg, { water }) => water.totalFlow > FLOW_MIN * 5);

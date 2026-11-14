@@ -3,6 +3,7 @@ import '@fontsource/pixelify-sans/700.css';
 import './ui/style.css';
 import './core/electricParts';
 import './core/mechanicParts';
+import './core/waterParts';
 import { setMuted } from './audio/synth';
 import { levelsOf } from './levels';
 import type { LevelDef } from './levels/types';

@@ -126,3 +126,39 @@ export class Voice {
     this.filter = null;
   }
 }
+
+/** Непрерывный шум через фильтр (вода, воздух). */
+export class NoiseVoice {
+  private src: AudioBufferSourceNode | null = null;
+  private g: GainNode | null = null;
+
+  constructor(private type: BiquadFilterType, private freq: number) {}
+
+  set(vol: number): void {
+    if (!ctx || !master) return;
+    if (!this.src) {
+      if (vol <= 0.0005) return;
+      this.src = ctx.createBufferSource();
+      this.src.buffer = noise();
+      this.src.loop = true;
+      const f = ctx.createBiquadFilter();
+      f.type = this.type;
+      f.frequency.value = this.freq;
+      this.g = ctx.createGain();
+      this.g.gain.value = 0;
+      this.src.connect(f).connect(this.g).connect(master);
+      this.src.start();
+    }
+    this.g!.gain.setTargetAtTime(muted ? 0 : vol, ctx.currentTime, 0.08);
+  }
+
+  stop(): void {
+    if (this.src && ctx) {
+      this.g!.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+      const s = this.src;
+      setTimeout(() => { try { s.stop(); } catch { /* уже */ } }, 300);
+    }
+    this.src = null;
+    this.g = null;
+  }
+}

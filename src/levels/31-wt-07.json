@@ -1,0 +1,126 @@
+{
+  "id": "wt-07",
+  "world": "water",
+  "mode": "puzzle",
+  "title": "Наполни бак",
+  "grid": {
+    "w": 9,
+    "h": 7
+  },
+  "palette": {},
+  "prePlaced": [
+    {
+      "type": "pump",
+      "x": 1,
+      "y": 3,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "pipe",
+      "path": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "valve",
+      "x": 4,
+      "y": 1,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "pipe",
+      "path": [
+        [
+          5,
+          1
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "tank",
+      "x": 6,
+      "y": 1,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "valve",
+      "x": 4,
+      "y": 5,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "pipe",
+      "path": [
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "pump",
+      "x": 1,
+      "y": 3,
+      "rot": 0,
+      "on": true
+    },
+    {
+      "type": "valve",
+      "x": 4,
+      "y": 1,
+      "rot": 0,
+      "on": true
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "tankFull": true
+      },
+      {
+        "noSpill": true
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 0
+  },
+  "intro": "Наполни бак — и без лужи на полу!",
+  "outro": "Нужный кран открыли, лишний — нет."
+}

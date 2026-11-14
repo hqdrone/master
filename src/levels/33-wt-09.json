@@ -1,0 +1,85 @@
+{
+  "id": "wt-09",
+  "world": "water",
+  "mode": "puzzle",
+  "title": "Колесо и вертушка",
+  "grid": {
+    "w": 9,
+    "h": 6
+  },
+  "palette": {
+    "pipe": 6,
+    "waterwheel": 1,
+    "drain": 1,
+    "gear_s": 2
+  },
+  "prePlaced": [
+    {
+      "type": "pump",
+      "x": 1,
+      "y": 3,
+      "rot": 0,
+      "locked": true,
+      "on": true
+    },
+    {
+      "type": "fan",
+      "x": 4,
+      "y": 1,
+      "rot": 0,
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "pipe",
+      "path": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          5,
+          3
+        ]
+      ]
+    },
+    {
+      "type": "waterwheel",
+      "x": 4,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "type": "gear_s",
+      "x": 4,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "type": "drain",
+      "x": 6,
+      "y": 3,
+      "rot": 0
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "fanSpins": true
+      },
+      {
+        "noSpill": true
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 6
+  },
+  "intro": "Раскрути вертушку водой!",
+  "outro": "Колесо крутится, только если воде есть куда уйти."
+}

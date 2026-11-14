@@ -17,6 +17,11 @@ export interface ElectricSpec {
   nominal?: number;
 }
 
+/** Модель детали для воды (и позже — воздуха). */
+export interface FluidSpec {
+  kind: 'pump' | 'pipe' | 'valve' | 'tank' | 'drain' | 'fountain' | 'wheel';
+}
+
 /** Механическая модель детали. */
 export interface MechSpec {
   /** gear — всё, что вращается и цепляется зубьями; axle — ось; belt — ремень/конвейер */
@@ -26,7 +31,7 @@ export interface MechSpec {
   /** стороны (при rot = 0), где деталь цепляется; по умолчанию все */
   sides?: Dir[];
   /** источник вращения */
-  source?: 'crank' | 'motor';
+  source?: 'crank' | 'motor' | 'water';
   /** деталь «показывает» вращение (вертушка, колесо…) */
   output?: boolean;
 }
@@ -39,10 +44,11 @@ export interface PartDef {
   /** ограничить стороны автотайлинга (при rot = 0), например конвейер — только E/W */
   sides?: Dir[];
   mech?: MechSpec;
+  fluid?: FluidSpec;
   /** поворот ни на что не влияет (шестерни) */
   anyRot?: boolean;
   /** Два вывода детали при rot = 0 (для электрики: [минус/анод, плюс/катод]). */
-  terminals?: [Dir, Dir];
+  terminals?: Dir[];
   portKind?: PortKind;
   electric?: ElectricSpec;
   /** Поворот на 180° ничего не меняет (для проверки шагов инструкции). */

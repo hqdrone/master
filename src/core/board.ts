@@ -14,6 +14,8 @@ export interface Part {
   on?: boolean;
   /** кнопка нажата */
   pressed?: boolean;
+  /** уровень воды в баке 0..1 */
+  level?: number;
 }
 
 export type NewPart = Omit<Part, 'id'>;

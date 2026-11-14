@@ -1,0 +1,108 @@
+{
+  "id": "wt-08",
+  "world": "water",
+  "mode": "puzzle",
+  "title": "Без луж",
+  "grid": {
+    "w": 9,
+    "h": 8
+  },
+  "palette": {
+    "fountain": 1,
+    "drain": 1,
+    "valve": 1
+  },
+  "prePlaced": [
+    {
+      "type": "pump",
+      "x": 1,
+      "y": 4,
+      "rot": 0,
+      "locked": true,
+      "on": true
+    },
+    {
+      "type": "pipe",
+      "locked": true,
+      "path": [
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ]
+      ]
+    }
+  ],
+  "solution": [
+    {
+      "type": "fountain",
+      "x": 4,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "type": "drain",
+      "x": 4,
+      "y": 7,
+      "rot": 1
+    },
+    {
+      "type": "valve",
+      "x": 7,
+      "y": 4,
+      "rot": 0
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "fountainOn": "all"
+      },
+      {
+        "count": {
+          "fountain": 1,
+          "drain": 1
+        }
+      },
+      {
+        "noSpill": true
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 3
+  },
+  "intro": "Три трубы льют на пол! Фонтан, слив и кран.",
+  "outro": "Закрытый кран — как затычка."
+}

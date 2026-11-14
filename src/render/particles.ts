@@ -16,6 +16,11 @@ export class Particles {
     this.list.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 10, life: 0, max: 0.3 + Math.random() * 0.3, col, size: 1, grow: 0 });
   }
 
+  /** капля воды с гравитацией */
+  drop(x: number, y: number, vx: number, vy: number, col = 12): void {
+    this.list.push({ x, y, vx, vy, life: 0, max: 0.6 + Math.random() * 0.4, col, size: Math.random() < 0.5 ? 2 : 1, grow: 0 });
+  }
+
   burst(x: number, y: number, col: number, n = 10): void {
     for (let i = 0; i < n; i++) this.spark(x, y, col);
   }

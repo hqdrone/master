@@ -1,0 +1,67 @@
+{
+  "id": "wt-04",
+  "world": "water",
+  "mode": "instruction",
+  "title": "Слив",
+  "grid": {
+    "w": 9,
+    "h": 6
+  },
+  "palette": {
+    "valve": 1,
+    "drain": 1,
+    "pipe": 4
+  },
+  "prePlaced": [
+    {
+      "type": "tank",
+      "x": 2,
+      "y": 3,
+      "rot": 0,
+      "locked": true,
+      "level": 1
+    }
+  ],
+  "steps": [
+    {
+      "type": "valve",
+      "x": 4,
+      "y": 3,
+      "rot": 0,
+      "hint": "Поставь кран"
+    },
+    {
+      "type": "drain",
+      "x": 6,
+      "y": 3,
+      "rot": 0,
+      "hint": "Поставь слив"
+    },
+    {
+      "type": "pipe",
+      "path": [
+        [
+          3,
+          3
+        ]
+      ],
+      "hint": "Труба из бака к крану"
+    },
+    {
+      "type": "pipe",
+      "path": [
+        [
+          5,
+          3
+        ]
+      ],
+      "hint": "Труба от крана к сливу"
+    }
+  ],
+  "goal": {
+    "tankEmpty": true
+  },
+  "afterPower": "Открой кран!",
+  "intro": "Бак полный. Сольём воду!",
+  "outro": "Открыли кран — вода ушла из бака."
+}

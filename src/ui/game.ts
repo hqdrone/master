@@ -5,6 +5,7 @@ import { isPath, type ItemSpec, type LevelDef } from '../levels/types';
 import { isOn, solveElectric, type ElectricResult } from '../sim/electric';
 import { checkGoal } from '../sim/goals';
 import { solveMech, SPIN_MIN, type MechResult } from '../sim/mechanic';
+import { FLOW_MIN, solveFluid, stepTanks, type FluidResult } from '../sim/fluid';
 import { Renderer, TILE, type Ghost } from '../render/renderer';
 import { initAudio } from '../audio/synth';
 import { Ambience, sfx } from '../audio/sounds';
@@ -44,6 +45,11 @@ export class Game {
 
   private sim: ElectricResult | null = null;
   private mech: MechResult | null = null;
+  private water: FluidResult | null = null;
+  /** растёт при каждом пересчёте симуляции — для кэша проверки цели */
+  private simStamp = 0;
+  private levelsAtSolve = new Map<number, number>();
+  private splashCd = 0;
   private hadJam = false;
   private tickPhase = 0;
   private told = new Set<string>();
@@ -202,6 +208,7 @@ export class Game {
     this.stepIndex = -2;
     this.sim = null;
     this.mech = null;
+    this.water = null;
     this.simVersion = -1;
     this.goalVersion = -1;
     this.prevOn.clear();
@@ -496,7 +503,7 @@ export class Game {
       if (this.board.at(x, y)) preview = null;
     }
     this.renderer.draw({
-      board: this.board, sim: this.sim, mech: this.mech, t: this.t, dt, angles: this.angles,
+      board: this.board, sim: this.sim, mech: this.mech, water: this.water, t: this.t, dt, angles: this.angles,
       ghosts, preview, selected: this.selected,
     });
     this.raf = requestAnimationFrame(this.frame);
@@ -509,21 +516,36 @@ export class Game {
 
   private tick(dt: number): void {
     const b = this.board;
-    if (this.powered && b.version !== this.simVersion) {
-      this.sim = solveElectric(b);
-      this.mech = solveMech(b, this.sim);
-      this.simVersion = b.version;
-    }
-    if (!this.powered) { this.sim = null; this.mech = null; }
+    const events0: string[] = [];
+    if (this.powered) {
+      // баки меняются со временем: пересчитываем воду, когда уровни заметно сдвинулись
+      let tanksMoved = false;
+      for (const [id, lv] of this.levelsAtSolve) {
+        const p = b.get(id);
+        const now = p?.level ?? 0;
+        if (Math.abs(now - lv) > 0.02 || ((now === 0 || now === 1) && now !== lv)) tanksMoved = true;
+      }
+      if (b.version !== this.simVersion || tanksMoved) {
+        this.sim = solveElectric(b);
+        this.water = solveFluid(b);
+        this.mech = solveMech(b, this.sim, this.water);
+        this.simVersion = b.version;
+        this.simStamp++;
+        this.levelsAtSolve = new Map(b.parts.filter((p) => p.type === 'tank').map((p) => [p.id, p.level ?? 0]));
+      }
+    } else { this.sim = null; this.mech = null; this.water = null; }
     const sim = this.sim;
     const mech = this.mech;
+    const water = this.water;
+    if (water) this.waterTick(water, dt, events0);
 
     let motorMax = 0, buzzMax = 0, lamps = 0, gearMax = 0;
-    const events: string[] = [];
+    const events: string[] = events0;
     if (sim && mech) {
       for (const p of b.parts) {
         const def = getPart(p.type);
         const lv = sim.level.get(p.id) ?? 0;
+        if (def.fluid?.kind === 'pump' && p.on) this.angles.set(p.id, (this.angles.get(p.id) ?? 0) + dt * 10);
         if (def.mech) {
           const v = mech.speed.get(p.id) ?? 0;
           // ленты — скорость в пикселях, шестерни — угол
@@ -557,22 +579,73 @@ export class Game {
       this.hadJam = mech.hasJam;
     }
     this.amb.update(motorMax, buzzMax, lamps);
+    this.amb.updateWater(water?.totalFlow ?? 0);
     // «тик-тик» шестерён
     const before = Math.floor(this.tickPhase);
     this.tickPhase += Math.min(gearMax, 3) * dt * 5;
     if (Math.floor(this.tickPhase) !== before) sfx.tick();
 
     if (sim && mech) this.hints(sim, mech, events);
+    if (water && this.t >= this.hintLockUntil) this.waterHints(water, events);
 
     // проверка цели
     if (sim && mech && !this.won && this.level.goal) {
-      if (this.goalVersion !== b.version) {
-        this.goalOk = checkGoal(this.level.goal, { board: b, res: sim, mech, solve: (ov) => solveElectric(b, ov) });
-        this.goalVersion = b.version;
+      if (this.goalVersion !== this.simStamp) {
+        this.goalOk = checkGoal(this.level.goal, { board: b, res: sim, mech, water: water!, solve: (ov) => solveElectric(b, ov) });
+        this.goalVersion = this.simStamp;
       }
       this.winHold = this.goalOk ? this.winHold + dt : 0;
       if (this.winHold > 2) this.win();
     }
+  }
+
+  /** Баки, брызги, фонтаны. */
+  private waterTick(water: FluidResult, dt: number, events: string[]): void {
+    const b = this.board;
+    const P = this.renderer.particles;
+    const fullBefore = new Set(b.parts.filter((p) => p.type === 'tank' && (p.level ?? 0) >= 0.95).map((p) => p.id));
+    const overflow = stepTanks(b, water, dt);
+    for (const p of b.parts) {
+      if (p.type === 'tank' && (p.level ?? 0) >= 0.95 && !fullBefore.has(p.id)) events.push('tankFull');
+      if (p.type === 'tank' && overflow && (p.level ?? 0) >= 1 && (water.tankIn.get(p.id) ?? 0) > FLOW_MIN) {
+        if (Math.random() < 0.6) P.drop(p.x * TILE + 3 + Math.random() * 10, p.y * TILE + 1, (Math.random() - 0.5) * 40, -20 - Math.random() * 20);
+      }
+      if (p.type === 'fountain') {
+        const f = water.flow.get(p.id) ?? 0;
+        const on = f > FLOW_MIN * 5;
+        if (on) for (let k = 0; k < 2; k++) {
+          // струя вверх (с учётом поворота фонтана)
+          const ang = -Math.PI / 2 + (p.rot * Math.PI) / 2 + (Math.random() - 0.5) * 0.5;
+          const v = 40 + 60 * Math.min(1.5, f / 0.5);
+          P.drop(p.x * TILE + 8, p.y * TILE + 6, Math.cos(ang) * v, Math.sin(ang) * v, Math.random() < 0.3 ? 7 : 12);
+        }
+        if (on && !this.prevOn.get(p.id)) events.push('fountain');
+        this.prevOn.set(p.id, on);
+      }
+    }
+    for (const e of water.openEnds) {
+      if (e.flow < FLOW_MIN) continue;
+      const ox = [8, 15, 8, 0][e.d], oy = [0, 8, 15, 8][e.d];
+      const vx = [0, 1, 0, -1][e.d] * 30, vy = [-1, 0, 1, 0][e.d] * 30;
+      for (let k = 0; k < 2; k++) P.drop(e.x * TILE + ox, e.y * TILE + oy, vx + (Math.random() - 0.5) * 15, vy - 10);
+    }
+    this.splashCd -= dt;
+    if ((water.spilling || overflow) && this.splashCd <= 0) { sfx.splash(); this.splashCd = 1.2; }
+    if (water.spilling) events.push('spill');
+    if (overflow) events.push('overflow');
+  }
+
+  private waterHints(water: FluidResult, events: string[]): void {
+    const once = (key: string, text: string, cond: boolean) => {
+      if (!cond || this.told.has(key)) return false;
+      this.told.add(key); this.say(text, 3.5); return true;
+    };
+    if (once('spill', T.robot.spill, events.includes('spill'))) return;
+    if (once('overflow', T.robot.overflow, events.includes('overflow'))) return;
+    if (once('full', T.robot.tankFull, events.includes('tankFull'))) return;
+    if (once('fountain', T.robot.fountain, events.includes('fountain'))) return;
+    const pumpOn = this.board.parts.some((p) => p.type === 'pump' && p.on);
+    if (once('dead', T.robot.deadEnd, pumpOn && water.totalFlow < FLOW_MIN && this.board.count('pipe') > 0)) return;
   }
 
   private hints(sim: ElectricResult, mech: MechResult, events: string[]): void {
@@ -604,7 +677,7 @@ export class Game {
       return;
     }
     if (events.includes('motor')) { this.say(T.robot.motor, 3); return; }
-    if (events.includes('fan') || events.includes('wheel')) { this.say(T.robot.spinning, 3); return; }
+    if (events.includes('fan') || events.includes('wheel') || events.includes('waterwheel')) { this.say(T.robot.spinning, 3); return; }
     if (events.includes('buzzer')) { this.say(T.robot.buzzer, 3); return; }
     if (events.includes('led')) { this.say(T.robot.lampOn, 3); return; }
     if (loads > 0 && bats === 0 && this.level.mode === 'sandbox') { this.say(T.robot.noBattery, 3); return; }

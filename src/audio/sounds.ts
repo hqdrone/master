@@ -1,4 +1,4 @@
-import { hiss, tone, Voice } from './synth';
+import { hiss, NoiseVoice, tone, Voice } from './synth';
 
 /** Все звуки игры в одном месте. */
 export const sfx = {
@@ -17,6 +17,8 @@ export const sfx = {
   },
   rotate: () => tone(600, 0.04, { vol: 0.08, slideTo: 800 }),
   tick: () => tone(2600, 0.012, { vol: 0.035 }),
+  bubble: () => tone(250 + Math.random() * 300, 0.06, { type: 'sine', vol: 0.06, slideTo: 700 + Math.random() * 300 }),
+  splash: () => hiss(0.3, { vol: 0.08, type: 'lowpass', freq: 1200 }),
   jam: () => { hiss(0.6, { vol: 0.12, type: 'bandpass', freq: 400 }); tone(90, 0.4, { type: 'square', vol: 0.08, slideTo: 60 }); },
 };
 
@@ -25,6 +27,13 @@ export class Ambience {
   motor = new Voice('sawtooth', 500);
   buzzer = new Voice('square', 2500);
   hum = new Voice('sine');
+  water = new NoiseVoice('lowpass', 500);
+
+  /** Журчание: громкость по расходу воды; изредка «буль». */
+  updateWater(flow: number): void {
+    this.water.set(Math.min(0.06, flow * 0.05));
+    if (flow > 0.05 && Math.random() < flow * 0.04) sfx.bubble();
+  }
 
   update(motorSpeed: number, buzzer: number, lamps: number): void {
     this.motor.set(50 + 120 * motorSpeed, motorSpeed > 0.05 ? 0.05 + 0.04 * Math.min(1, motorSpeed) : 0);
@@ -36,5 +45,6 @@ export class Ambience {
     this.motor.stop();
     this.buzzer.stop();
     this.hum.stop();
+    this.water.stop();
   }
 }

@@ -8,7 +8,15 @@ export function placeItem(b: Board, s: ItemSpec, pre: boolean): void {
       if (!b.at(x, y)) b.add({ type: s.type, x, y, rot: 0, locked: s.locked, pre });
     }
   } else {
-    b.add({ type: s.type, x: s.x, y: s.y, rot: s.rot ?? 0, locked: s.locked, pre, on: s.on, pressed: s.pressed });
+    // деталь уже стоит (например, кран уровня) — решение может её включить
+    const there = b.at(s.x, s.y);
+    if (there && there.type === s.type) {
+      if (s.on !== undefined) there.on = s.on;
+      if (s.pressed !== undefined) there.pressed = s.pressed;
+      b.touch();
+      return;
+    }
+    b.add({ type: s.type, x: s.x, y: s.y, rot: s.rot ?? 0, locked: s.locked, pre, on: s.on, pressed: s.pressed, level: s.level });
   }
 }
 

@@ -4,6 +4,8 @@ import { DIRS, DX, DY, opp } from '../core/geom';
 import { getPart } from '../core/parts';
 import type { ElectricResult } from '../sim/electric';
 import type { MechResult } from '../sim/mechanic';
+import type { FluidResult } from '../sim/fluid';
+import type { Link } from '../sim/electric';
 import { BOARD_BG, BOARD_DOT, C, PAL } from './colors';
 import { Particles } from './particles';
 import { line, rect, type Ctx } from './px';
@@ -17,6 +19,7 @@ export interface Scene {
   board: Board;
   sim: ElectricResult | null;
   mech: MechResult | null;
+  water: FluidResult | null;
   t: number;
   dt: number;
   angles: Map<number, number>;
@@ -93,7 +96,8 @@ export class Renderer {
     for (const p of board.parts) this.drawOne(c, p, s);
 
     // ток
-    if (s.sim) this.drawCurrent(c, s);
+    if (s.sim) this.drawFlow(c, s, s.sim.links, 0.28, 1.5, 'e');
+    if (s.water) this.drawFlow(c, s, s.water.links, 0.5, Infinity, 'w');
 
     // свечение
     c.globalCompositeOperation = 'lighter';
@@ -154,11 +158,13 @@ export class Renderer {
       t: s.t,
       on: p.on,
       pressed: p.pressed,
-      level: Math.abs(lv),
       angle: s.angles.get(p.id) ?? 0,
       mask: def.autotile ? connectionMask(s.board, p.x, p.y) : 0,
       short: sim?.shorted.has(p.id),
       jam: s.mech?.jammed.has(p.id),
+      wet: s.water?.wet.has(p.id),
+      fill: p.level,
+      level: Math.abs(lv) || Math.abs(s.water?.flow.get(p.id) ?? 0) / 0.5,
       gx: p.x * TILE,
     });
     if (p.locked && !def.autotile) {
@@ -166,28 +172,31 @@ export class Renderer {
     }
   }
 
-  private drawCurrent(c: Ctx, s: Scene): void {
+  /** Бегущие точки по проводам/трубам: скорость = сила потока. */
+  private drawFlow(c: Ctx, s: Scene, links: Link[], nominal: number, danger: number, tag: string): void {
     const { board } = s;
-    const isWire = (x: number, y: number) => {
+    const isTile = (x: number, y: number) => {
       const q = board.at(x, y);
       return !!q && !!getPart(q.type).autotile;
     };
-    for (const l of s.sim!.links) {
+    const water = tag === 'w';
+    for (const l of links) {
       const ai = Math.abs(l.i);
       if (ai < 0.004) continue;
-      const key = `${l.ax},${l.ay},${l.bx},${l.by}`;
-      const speed = Math.min(90, 10 + 45 * (ai / 0.28));
+      const key = `${tag}${l.ax},${l.ay},${l.bx},${l.by}`;
+      const speed = Math.min(90, 10 + 45 * (ai / nominal));
       const ph = ((this.phases.get(key) ?? 0) + Math.sign(l.i) * speed * s.dt + 1600) % 16;
       this.phases.set(key, ph);
       const ax = l.ax * TILE + 7, ay = l.ay * TILE + 7;
       const dx = (l.bx - l.ax), dy = (l.by - l.ay);
-      const aw = isWire(l.ax, l.ay), bw = isWire(l.bx, l.by);
-      c.fillStyle = ai > 1.5 ? PAL[C.red] : PAL[C.yellow];
+      const aw = isTile(l.ax, l.ay), bw = isTile(l.bx, l.by);
+      c.fillStyle = water ? PAL[C.white] : ai > danger ? PAL[C.red] : PAL[C.yellow];
       for (let k = 0; k < 4; k++) {
         const d = (ph + k * 4) % 16;
         const inA = d < 8;
         if (inA && !aw && d < 4) continue; // внутри детали — только на выводе
         if (!inA && !bw && d > 12) continue;
+        if (water && k % 2) continue; // капли реже
         c.fillRect(Math.round(ax + dx * d), Math.round(ay + dy * d), 2, 2);
       }
     }
