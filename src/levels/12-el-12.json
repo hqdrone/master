@@ -1,0 +1,133 @@
+{
+  "id": "el-12",
+  "world": "electric",
+  "mode": "puzzle",
+  "title": "Без замыкания",
+  "grid": {
+    "w": 7,
+    "h": 9
+  },
+  "palette": {
+    "lamp": 2,
+    "motor": 1,
+    "wire": 4
+  },
+  "prePlaced": [
+    {
+      "type": "battery",
+      "x": 3,
+      "y": 7,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          2,
+          7
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          7
+        ]
+      ],
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "lamp",
+      "x": 3,
+      "y": 1
+    },
+    {
+      "type": "lamp",
+      "x": 3,
+      "y": 3
+    },
+    {
+      "type": "motor",
+      "x": 3,
+      "y": 5
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "count": {
+          "lamp": 2,
+          "motor": 1
+        }
+      },
+      {
+        "lampOn": "all"
+      },
+      {
+        "motorSpins": true
+      },
+      {
+        "noShortCircuit": true
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 3
+  },
+  "intro": "Подключи две лампы и мотор. Без замыкания!",
+  "outro": "Ток любит лёгкий путь. Провод без нагрузки — замыкание!"
+}

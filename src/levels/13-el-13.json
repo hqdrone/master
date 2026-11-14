@@ -1,0 +1,143 @@
+{
+  "id": "el-13",
+  "world": "electric",
+  "mode": "puzzle",
+  "title": "Обе кнопки",
+  "grid": {
+    "w": 10,
+    "h": 7
+  },
+  "palette": {
+    "button": 2,
+    "wire": 5
+  },
+  "prePlaced": [
+    {
+      "type": "battery",
+      "x": 2,
+      "y": 5,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "lamp",
+      "x": 7,
+      "y": 1,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          8,
+          1
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "wire",
+      "path": [
+        [
+          2,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "type": "button",
+      "x": 3,
+      "y": 1
+    },
+    {
+      "type": "button",
+      "x": 5,
+      "y": 1
+    }
+  ],
+  "goal": {
+    "truth": {
+      "inputs": "button",
+      "fn": "and",
+      "output": "lamp"
+    }
+  },
+  "stars": {
+    "maxParts": 5
+  },
+  "intro": "Лампа горит, только если нажаты ОБЕ кнопки.",
+  "outro": "Кнопки подряд — это «И»: нужны обе."
+}

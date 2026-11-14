@@ -1,0 +1,183 @@
+{
+  "id": "el-10",
+  "world": "electric",
+  "mode": "puzzle",
+  "title": "Лампа, но не пищалка",
+  "grid": {
+    "w": 11,
+    "h": 8
+  },
+  "palette": {
+    "switch": 2,
+    "wire": 16
+  },
+  "prePlaced": [
+    {
+      "type": "battery",
+      "x": 2,
+      "y": 6,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "lamp",
+      "x": 6,
+      "y": 2,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "buzzer",
+      "x": 6,
+      "y": 4,
+      "rot": 0,
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          7,
+          2
+        ]
+      ],
+      "locked": true
+    },
+    {
+      "type": "wire",
+      "path": [
+        [
+          7,
+          4
+        ]
+      ],
+      "locked": true
+    }
+  ],
+  "solution": [
+    {
+      "type": "wire",
+      "path": [
+        [
+          1,
+          6
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          4
+        ]
+      ]
+    },
+    {
+      "type": "switch",
+      "x": 4,
+      "y": 2,
+      "on": true
+    },
+    {
+      "type": "switch",
+      "x": 4,
+      "y": 4,
+      "on": false
+    }
+  ],
+  "goal": {
+    "all": [
+      {
+        "lampOn": "any"
+      },
+      {
+        "buzzerOn": false
+      },
+      {
+        "reachable": {
+          "inputs": "switch",
+          "state": {
+            "buzzer": true
+          }
+        }
+      }
+    ]
+  },
+  "stars": {
+    "maxParts": 13
+  },
+  "intro": "Свой выключатель каждому! Зажги лампу, а пищалку — нет.",
+  "outro": "Два выключателя — две отдельные цепи."
+}
